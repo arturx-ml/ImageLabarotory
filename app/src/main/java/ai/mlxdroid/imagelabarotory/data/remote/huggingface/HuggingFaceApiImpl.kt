@@ -20,6 +20,18 @@ class HuggingFaceApiImpl @Inject constructor(
         return try {
             val json = JSONObject().apply {
                 put("inputs", request.prompt)
+                put("parameters", JSONObject().apply {
+                    put("width", request.width)
+                    put("height", request.height)
+                    put("num_inference_steps", request.numInferenceSteps)
+                    put("guidance_scale", request.guidanceScale.toDouble())
+                    if (!request.negativePrompt.isNullOrBlank()) {
+                        put("negative_prompt", request.negativePrompt)
+                    }
+                    if (request.seed != null) {
+                        put("seed", request.seed)
+                    }
+                })
             }
             val body = json.toString().toRequestBody("application/json".toMediaType())
             val url = "models/$MODEL_ID"

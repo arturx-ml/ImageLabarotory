@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import ai.mlxdroid.imagelabarotory.data.model.ImageGenerationRequest
 import ai.mlxdroid.imagelabarotory.data.model.ImageGenerationResult
 import ai.mlxdroid.imagelabarotory.data.repository.ImageRepository
+import ai.mlxdroid.imagelabarotory.util.GeneratedImage
 import ai.mlxdroid.imagelabarotory.util.ImageStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -51,22 +52,70 @@ class GalleryViewModel @Inject constructor(
         _uiState.update { it.copy(errorMessage = null) }
     }
 
+    // Generation settings
+    fun onSizePresetChanged(preset: ImageSizePreset) {
+        _uiState.update { it.copy(sizePreset = preset) }
+    }
+
+    fun onInferenceStepsChanged(steps: Int) {
+        _uiState.update { it.copy(numInferenceSteps = steps) }
+    }
+
+    fun onGuidanceScaleChanged(scale: Float) {
+        _uiState.update { it.copy(guidanceScale = scale) }
+    }
+
+    fun onNegativePromptChanged(text: String) {
+        _uiState.update { it.copy(negativePrompt = text) }
+    }
+
+    fun onSeedChanged(seed: String) {
+        // Only allow digits or empty
+        if (seed.isEmpty() || seed.all { it.isDigit() }) {
+            _uiState.update { it.copy(seed = seed) }
+        }
+    }
+
+    fun onToggleAdvancedSettings() {
+        _uiState.update { it.copy(showAdvancedSettings = !it.showAdvancedSettings) }
+    }
+
+    // Full-screen image viewer
+    fun onImageSelected(image: GeneratedImage) {
+        _uiState.update { it.copy(selectedImage = image) }
+    }
+
+    fun onDismissImageViewer() {
+        _uiState.update { it.copy(selectedImage = null) }
+    }
+
     fun onGenerate() {
-        val prompt = _uiState.value.prompt.trim()
+        val state = _uiState.value
+        val prompt = state.prompt.trim()
         if (prompt.isEmpty()) return
 
         viewModelScope.launch {
             _uiState.update { it.copy(isGenerating = true, errorMessage = null) }
 
-            val result = repository.generateImage(ImageGenerationRequest(prompt = prompt))
+            val request = ImageGenerationRequest(
+                prompt = prompt,
+                width = state.sizePreset.width,
+                height = state.sizePreset.height,
+                numInferenceSteps = state.numInferenceSteps,
+                guidanceScale = state.guidanceScale,
+                negativePrompt = state.negativePrompt.ifBlank { null },
+                seed = state.seed.toLongOrNull(),
+            )
+
+            val result = repository.generateImage(request)
 
             when (result) {
                 is ImageGenerationResult.Success -> {
                     val saved = imageStorage.saveImage(result.imageBytes, prompt)
-                    _uiState.update { state ->
-                        state.copy(
+                    _uiState.update { s ->
+                        s.copy(
                             isGenerating = false,
-                            images = listOf(saved) + state.images,
+                            images = listOf(saved) + s.images,
                             prompt = "",
                             showGenerateSheet = false,
                         )

@@ -16,6 +16,7 @@ fun ImageGrid(
     images: List<GeneratedImage>,
     imageStorage: ImageStorage,
     modifier: Modifier = Modifier,
+    onImageClick: (GeneratedImage) -> Unit = {},
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -28,6 +29,7 @@ fun ImageGrid(
             ImageCard(
                 imageFile = imageStorage.getImageFile(image),
                 prompt = image.prompt,
+                onClick = { onImageClick(image) },
             )
         }
     }
