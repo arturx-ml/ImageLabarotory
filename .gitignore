@@ -13,3 +13,11 @@
 .externalNativeBuild
 .cxx
 local.properties
+/.idea/
+/.vscode/
+/.gradle/
+/gradlew
+/gradlew.bat
+/gradle/wrapper/
+/models/
+/lcm_ort_models/
