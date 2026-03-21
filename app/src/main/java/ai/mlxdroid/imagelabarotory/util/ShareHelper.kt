@@ -1,14 +1,12 @@
-package ai.mlxdroid.imagelabarotory.domain.usecase
+package ai.mlxdroid.imagelabarotory.util
 
 import android.content.Context
 import android.content.Intent
-import ai.mlxdroid.imagelabarotory.util.GeneratedImage
-import ai.mlxdroid.imagelabarotory.util.ImageStorage
 import androidx.core.content.FileProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-class ShareImageUseCase @Inject constructor(
+class ShareHelper @Inject constructor(
     @ApplicationContext private val context: Context,
     private val imageStorage: ImageStorage,
 ) {

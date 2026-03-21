@@ -5,8 +5,9 @@ import androidx.lifecycle.viewModelScope
 import ai.mlxdroid.imagelabarotory.domain.usecase.DeleteImageUseCase
 import ai.mlxdroid.imagelabarotory.domain.usecase.GenerateImageUseCase
 import ai.mlxdroid.imagelabarotory.domain.usecase.LoadImagesUseCase
-import ai.mlxdroid.imagelabarotory.domain.usecase.ShareImageUseCase
 import ai.mlxdroid.imagelabarotory.util.GeneratedImage
+import ai.mlxdroid.imagelabarotory.util.ImageStorage
+import ai.mlxdroid.imagelabarotory.util.ShareHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -21,7 +23,8 @@ class GalleryViewModel @Inject constructor(
     private val generateImageUseCase: GenerateImageUseCase,
     private val loadImagesUseCase: LoadImagesUseCase,
     private val deleteImageUseCase: DeleteImageUseCase,
-    private val shareImageUseCase: ShareImageUseCase,
+    private val shareHelper: ShareHelper,
+    private val imageStorage: ImageStorage,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GalleryUiState())
@@ -36,6 +39,10 @@ class GalleryViewModel @Inject constructor(
             val images = loadImagesUseCase()
             _uiState.update { it.copy(images = images) }
         }
+    }
+
+    fun getImageFile(image: GeneratedImage): File {
+        return imageStorage.getImageFile(image)
     }
 
     fun onPromptChanged(prompt: String) {
@@ -91,7 +98,13 @@ class GalleryViewModel @Inject constructor(
     }
 
     fun onShareImage(image: GeneratedImage) {
-        shareImageUseCase(image)
+        try {
+            shareHelper(image)
+        } catch (e: Exception) {
+            _uiState.update {
+                it.copy(errorMessage = "Failed to share image: ${e.message}")
+            }
+        }
     }
 
     fun onGenerate() {
@@ -137,9 +150,16 @@ class GalleryViewModel @Inject constructor(
     fun onDeleteImage(imageId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val image = _uiState.value.images.find { it.id == imageId } ?: return@launch
-            deleteImageUseCase(image)
-            _uiState.update { state ->
-                state.copy(images = state.images.filter { it.id != imageId })
+            try {
+                deleteImageUseCase(image)
+                _uiState.update { state ->
+                    state.copy(images = state.images.filter { it.id != imageId })
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(errorMessage = "Failed to delete image: ${e.message}")
+                }
+                loadImages()
             }
         }
     }

@@ -9,12 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import ai.mlxdroid.imagelabarotory.util.GeneratedImage
-import ai.mlxdroid.imagelabarotory.util.ImageStorage
+import java.io.File
 
 @Composable
 fun ImageGrid(
     images: List<GeneratedImage>,
-    imageStorage: ImageStorage,
+    getImageFile: (GeneratedImage) -> File,
     modifier: Modifier = Modifier,
     onImageClick: (GeneratedImage) -> Unit = {},
 ) {
@@ -27,7 +27,7 @@ fun ImageGrid(
     ) {
         items(images, key = { it.id }) { image ->
             ImageCard(
-                imageFile = imageStorage.getImageFile(image),
+                imageFile = getImageFile(image),
                 prompt = image.prompt,
                 onClick = { onImageClick(image) },
             )

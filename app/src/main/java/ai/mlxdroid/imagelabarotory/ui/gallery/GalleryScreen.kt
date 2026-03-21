@@ -23,12 +23,10 @@ import ai.mlxdroid.imagelabarotory.ui.gallery.components.EmptyState
 import ai.mlxdroid.imagelabarotory.ui.gallery.components.FullScreenImageViewer
 import ai.mlxdroid.imagelabarotory.ui.gallery.components.GenerateSheet
 import ai.mlxdroid.imagelabarotory.ui.gallery.components.ImageGrid
-import ai.mlxdroid.imagelabarotory.util.ImageStorage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GalleryScreen(
-    imageStorage: ImageStorage,
     viewModel: GalleryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -64,7 +62,7 @@ fun GalleryScreen(
             } else {
                 ImageGrid(
                     images = uiState.images,
-                    imageStorage = imageStorage,
+                    getImageFile = viewModel::getImageFile,
                     onImageClick = viewModel::onImageSelected,
                 )
             }
@@ -96,7 +94,7 @@ fun GalleryScreen(
 
         uiState.selectedImage?.let { image ->
             FullScreenImageViewer(
-                imageFile = imageStorage.getImageFile(image),
+                imageFile = viewModel.getImageFile(image),
                 prompt = image.prompt,
                 onDismiss = viewModel::onDismissImageViewer,
                 onShare = { viewModel.onShareImage(image) },
