@@ -44,6 +44,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ai.mlxdroid.imagelabarotory.ui.gallery.ImageSizePreset
 import ai.mlxdroid.imagelabarotory.ui.theme.ImageLabarotoryTheme
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -161,8 +164,12 @@ fun GenerateSheetContent(
                         count = ImageSizePreset.entries.size,
                     ),
                     enabled = !isGenerating,
+                    modifier = Modifier.weight(1f),
                 ) {
-                    Text(preset.label)
+                    Text(preset.label,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        fontSize= 12.sp)
                 }
             }
         }
