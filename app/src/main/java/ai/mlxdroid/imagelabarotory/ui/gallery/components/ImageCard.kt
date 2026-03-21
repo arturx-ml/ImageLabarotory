@@ -17,7 +17,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import coil.compose.AsyncImage
+import ai.mlxdroid.imagelabarotory.ui.theme.ImageLabarotoryTheme
 import java.io.File
 
 @Composable
@@ -61,6 +63,19 @@ fun ImageCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ImageCardPreview() {
+    ImageLabarotoryTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            ImageCard(
+                imageFile = File("preview_placeholder.png"),
+                prompt = "A beautiful sunset over the mountains with golden light",
+            )
         }
     }
 }

@@ -2,11 +2,11 @@ package ai.mlxdroid.imagelabarotory.ui.gallery
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import ai.mlxdroid.imagelabarotory.data.model.ImageGenerationRequest
-import ai.mlxdroid.imagelabarotory.data.model.ImageGenerationResult
-import ai.mlxdroid.imagelabarotory.data.repository.ImageRepository
+import ai.mlxdroid.imagelabarotory.domain.usecase.DeleteImageUseCase
+import ai.mlxdroid.imagelabarotory.domain.usecase.GenerateImageUseCase
+import ai.mlxdroid.imagelabarotory.domain.usecase.LoadImagesUseCase
+import ai.mlxdroid.imagelabarotory.domain.usecase.ShareImageUseCase
 import ai.mlxdroid.imagelabarotory.util.GeneratedImage
-import ai.mlxdroid.imagelabarotory.util.ImageStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,8 +18,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class GalleryViewModel @Inject constructor(
-    private val repository: ImageRepository,
-    private val imageStorage: ImageStorage,
+    private val generateImageUseCase: GenerateImageUseCase,
+    private val loadImagesUseCase: LoadImagesUseCase,
+    private val deleteImageUseCase: DeleteImageUseCase,
+    private val shareImageUseCase: ShareImageUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GalleryUiState())
@@ -31,7 +33,7 @@ class GalleryViewModel @Inject constructor(
 
     private fun loadImages() {
         viewModelScope.launch(Dispatchers.IO) {
-            val images = imageStorage.loadImages()
+            val images = loadImagesUseCase()
             _uiState.update { it.copy(images = images) }
         }
     }
@@ -70,7 +72,6 @@ class GalleryViewModel @Inject constructor(
     }
 
     fun onSeedChanged(seed: String) {
-        // Only allow digits or empty
         if (seed.isEmpty() || seed.all { it.isDigit() }) {
             _uiState.update { it.copy(seed = seed) }
         }
@@ -89,6 +90,10 @@ class GalleryViewModel @Inject constructor(
         _uiState.update { it.copy(selectedImage = null) }
     }
 
+    fun onShareImage(image: GeneratedImage) {
+        shareImageUseCase(image)
+    }
+
     fun onGenerate() {
         val state = _uiState.value
         val prompt = state.prompt.trim()
@@ -97,21 +102,17 @@ class GalleryViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isGenerating = true, errorMessage = null) }
 
-            val request = ImageGenerationRequest(
+            val result = generateImageUseCase(
                 prompt = prompt,
-                width = state.sizePreset.width,
-                height = state.sizePreset.height,
+                sizePreset = state.sizePreset,
                 numInferenceSteps = state.numInferenceSteps,
                 guidanceScale = state.guidanceScale,
                 negativePrompt = state.negativePrompt.ifBlank { null },
                 seed = state.seed.toLongOrNull(),
             )
 
-            val result = repository.generateImage(request)
-
-            when (result) {
-                is ImageGenerationResult.Success -> {
-                    val saved = imageStorage.saveImage(result.imageBytes, prompt)
+            result.fold(
+                onSuccess = { saved ->
                     _uiState.update { s ->
                         s.copy(
                             isGenerating = false,
@@ -120,18 +121,23 @@ class GalleryViewModel @Inject constructor(
                             showGenerateSheet = false,
                         )
                     }
-                }
-                is ImageGenerationResult.Error -> {
-                    _uiState.update { it.copy(isGenerating = false, errorMessage = result.message) }
-                }
-            }
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            isGenerating = false,
+                            errorMessage = error.message ?: "Unknown error",
+                        )
+                    }
+                },
+            )
         }
     }
 
     fun onDeleteImage(imageId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val image = _uiState.value.images.find { it.id == imageId } ?: return@launch
-            imageStorage.deleteImage(image)
+            deleteImageUseCase(image)
             _uiState.update { state ->
                 state.copy(images = state.images.filter { it.id != imageId })
             }

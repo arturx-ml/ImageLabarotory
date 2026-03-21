@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -46,104 +47,133 @@ fun FullScreenImageViewer(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        var scale by remember { mutableFloatStateOf(1f) }
-        var offsetX by remember { mutableFloatStateOf(0f) }
-        var offsetY by remember { mutableFloatStateOf(0f) }
+        FullScreenImageViewerContent(
+            imageModel = imageFile,
+            prompt = prompt,
+            onDismiss = onDismiss,
+            onShare = onShare,
+        )
+    }
+}
 
-        Box(
+@Composable
+fun FullScreenImageViewerContent(
+    imageModel: Any?,
+    prompt: String,
+    onDismiss: () -> Unit,
+    onShare: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offsetX by remember { mutableFloatStateOf(0f) }
+    var offsetY by remember { mutableFloatStateOf(0f) }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .systemBarsPadding(),
+    ) {
+        // Zoomable image
+        AsyncImage(
+            model = imageModel,
+            contentDescription = prompt,
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
-                .systemBarsPadding(),
-        ) {
-            // Zoomable image
-            AsyncImage(
-                model = imageFile,
-                contentDescription = prompt,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer(
-                        scaleX = scale,
-                        scaleY = scale,
-                        translationX = offsetX,
-                        translationY = offsetY,
-                    )
-                    .pointerInput(Unit) {
-                        detectTransformGestures { _, pan, zoom, _ ->
-                            scale = (scale * zoom).coerceIn(1f, 5f)
-                            if (scale > 1f) {
-                                offsetX += pan.x
-                                offsetY += pan.y
-                            } else {
-                                offsetX = 0f
-                                offsetY = 0f
-                            }
+                .graphicsLayer(
+                    scaleX = scale,
+                    scaleY = scale,
+                    translationX = offsetX,
+                    translationY = offsetY,
+                )
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        scale = (scale * zoom).coerceIn(1f, 5f)
+                        if (scale > 1f) {
+                            offsetX += pan.x
+                            offsetY += pan.y
+                        } else {
+                            offsetX = 0f
+                            offsetY = 0f
                         }
                     }
-                    .pointerInput(Unit) {
-                        detectTapGestures(
-                            onDoubleTap = {
-                                if (scale > 1f) {
-                                    scale = 1f
-                                    offsetX = 0f
-                                    offsetY = 0f
-                                } else {
-                                    scale = 3f
-                                }
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = {
+                            if (scale > 1f) {
+                                scale = 1f
+                                offsetX = 0f
+                                offsetY = 0f
+                            } else {
+                                scale = 3f
                             }
-                        )
-                    },
-                contentScale = ContentScale.Fit,
-            )
+                        }
+                    )
+                },
+            contentScale = ContentScale.Fit,
+        )
 
-            // Top bar with close and share
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter)
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+        // Top bar with close and share
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .background(Color.Black.copy(alpha = 0.5f))
+                .padding(horizontal = 4.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(
+                onClick = onDismiss,
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = Color.White,
+                ),
             ) {
-                IconButton(
-                    onClick = onDismiss,
-                    colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = Color.White,
-                    ),
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Close",
-                    )
-                }
-                IconButton(
-                    onClick = onShare,
-                    colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = Color.White,
-                    ),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = "Share",
-                    )
-                }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Close",
+                )
             }
-
-            // Bottom prompt text
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .padding(16.dp),
+            IconButton(
+                onClick = onShare,
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = Color.White,
+                ),
             ) {
-                Text(
-                    text = prompt,
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodyMedium,
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = "Share",
                 )
             }
         }
+
+        // Bottom prompt text
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(Color.Black.copy(alpha = 0.5f))
+                .padding(16.dp),
+        ) {
+            Text(
+                text = prompt,
+                color = Color.White,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun FullScreenImageViewerPreview() {
+    MaterialTheme {
+        FullScreenImageViewerContent(
+            imageModel = null,
+            prompt = "A serene lake surrounded by mountains at sunset, photorealistic style with golden hour lighting",
+            onDismiss = {},
+            onShare = {},
+        )
     }
 }
