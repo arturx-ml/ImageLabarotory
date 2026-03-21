@@ -30,15 +30,16 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
         compose = true
     }
+}
+
+kotlin {
+    jvmToolchain(21)
 }
 
 dependencies {
@@ -50,6 +51,32 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+
+    // TensorFlow Lite (kept for BaseGeneratorModel compatibility — GPU dep removed)
+    implementation("org.tensorflow:tensorflow-lite:2.17.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.5.0")
+
+    // ONNX Runtime — NNAPI EP built-in, no extra dep needed
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.24.2")
+
+    // Coroutines for async operations
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+
+    // ViewModel and lifecycle
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
+
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+
+    // Coil for image loading
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
+    // DataStore for settings
+    implementation("androidx.datastore:datastore-preferences:1.2.0")
+
+    implementation(libs.compose.material.icons.extended)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

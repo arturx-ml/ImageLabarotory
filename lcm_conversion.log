@@ -1,0 +1,34 @@
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+
+[1/4] Downloading LCM UNet ONNX from HuggingFace (~3.4 GB)...
+      This will be cached in ~/.cache/huggingface/
+      Cached at: /Users/arturxk/.cache/huggingface/hub/models--SimianLuo--LCM_Dreamshaper_v7/snapshots/a85df6a8bd976cdd08b4fd8f3b73f229c9e54df5/unet
+
+[2/4] Inspecting model inputs...
+      Current input shapes:
+        sample: ['batch_size', 'num_channels', 'height', 'width']
+        timestep: ['steps']
+        encoder_hidden_states: ['batch_size', 'sequence_length', 768]
+        timestep_cond: ['batch_size', 256]
+
+[3/4] Applying INT8 dynamic quantization (this takes ~5-15 min)...
+      Quantizing from original model path (preserves external data).
+      Fixing dynamic input shapes to static (batch=1, 512x512)...
+      Shapes fixed.
+      Quantized model size: 824 MB → lcm_ort_models/unet_lcm_int8.onnx
+
+[4/4] Converting to ORT format for Android...
+      ORT conversion failed (convert_onnx_models_to_ort() got an unexpected keyword argument 'optimization_style')
+      The quantized .onnx is still usable directly with OrtSession on Android
+
+============================================================
+DONE. Files for Android:
+
+  unet_fixed.onnx                                     0 MB
+  unet_lcm_int8.onnx                                824 MB
+
+Next steps:
+  1. Copy unet_lcm_int8.ort (or .onnx) to the device
+  2. Reuse anthrapper text_encoder_quant.ort + decoder_quant.ort as-is
+  3. Update ModelRepository URLs to point to these files
+============================================================
