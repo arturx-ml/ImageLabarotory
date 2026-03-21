@@ -22,7 +22,8 @@ class HuggingFaceApiImpl @Inject constructor(
                 put("inputs", request.prompt)
             }
             val body = json.toString().toRequestBody("application/json".toMediaType())
-            val response = apiService.generateImage(body)
+            val url = "models/$MODEL_ID"
+            val response = apiService.generateImage(url, body)
 
             if (response.isSuccessful) {
                 val bytes = response.body()?.bytes()
@@ -46,5 +47,9 @@ class HuggingFaceApiImpl @Inject constructor(
         } catch (e: Exception) {
             ImageGenerationResult.Error("Unexpected error: ${e.message}")
         }
+    }
+
+    companion object {
+        const val MODEL_ID = "black-forest-labs/FLUX.1-schnell"
     }
 }

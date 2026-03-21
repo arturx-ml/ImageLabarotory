@@ -51,7 +51,7 @@ object AppModule {
     @Singleton
     fun provideHuggingFaceApiService(client: OkHttpClient): HuggingFaceApiService {
         return Retrofit.Builder()
-            .baseUrl("https://api-inference.huggingface.co/")
+            .baseUrl("https://router.huggingface.co/hf-inference/")
             .client(client)
             .build()
             .create(HuggingFaceApiService::class.java)
