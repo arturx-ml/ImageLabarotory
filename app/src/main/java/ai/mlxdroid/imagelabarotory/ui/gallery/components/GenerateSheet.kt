@@ -21,7 +21,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -72,6 +75,9 @@ fun GenerateSheet(
     onPromptChanged: (String) -> Unit,
     onProviderChanged: (ApiProvider) -> Unit,
     onDownloadModel: () -> Unit,
+    onPauseDownload: () -> Unit,
+    onResumeDownload: () -> Unit,
+    onCancelDownload: () -> Unit,
     onSizePresetChanged: (ImageSizePreset) -> Unit,
     onInferenceStepsChanged: (Int) -> Unit,
     onGuidanceScaleChanged: (Float) -> Unit,
@@ -103,6 +109,9 @@ fun GenerateSheet(
             onPromptChanged = onPromptChanged,
             onProviderChanged = onProviderChanged,
             onDownloadModel = onDownloadModel,
+            onPauseDownload = onPauseDownload,
+            onResumeDownload = onResumeDownload,
+            onCancelDownload = onCancelDownload,
             onSizePresetChanged = onSizePresetChanged,
             onInferenceStepsChanged = onInferenceStepsChanged,
             onGuidanceScaleChanged = onGuidanceScaleChanged,
@@ -131,6 +140,9 @@ fun GenerateSheetContent(
     onPromptChanged: (String) -> Unit,
     onProviderChanged: (ApiProvider) -> Unit,
     onDownloadModel: () -> Unit,
+    onPauseDownload: () -> Unit,
+    onResumeDownload: () -> Unit,
+    onCancelDownload: () -> Unit,
     onSizePresetChanged: (ImageSizePreset) -> Unit,
     onInferenceStepsChanged: (Int) -> Unit,
     onGuidanceScaleChanged: (Float) -> Unit,
@@ -192,6 +204,9 @@ fun GenerateSheetContent(
             ModelStatusCard(
                 downloadState = modelDownloadState,
                 onDownload = onDownloadModel,
+                onPause = onPauseDownload,
+                onResume = onResumeDownload,
+                onCancel = onCancelDownload,
             )
         }
 
@@ -428,6 +443,9 @@ fun GenerateSheetContent(
 private fun ModelStatusCard(
     downloadState: ModelDownloadState,
     onDownload: () -> Unit,
+    onPause: () -> Unit,
+    onResume: () -> Unit,
+    onCancel: () -> Unit,
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -448,7 +466,7 @@ private fun ModelStatusCard(
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "Download the on-device model (~3.4 GB) to generate images locally.",
+                        text = "Download the on-device model (~1.8 GB) to generate images locally.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -483,6 +501,78 @@ private fun ModelStatusCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        OutlinedButton(
+                            onClick = onPause,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Icon(
+                                Icons.Default.Pause,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text("Pause")
+                        }
+                        OutlinedButton(
+                            onClick = onCancel,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error,
+                            ),
+                        ) {
+                            Text("Cancel")
+                        }
+                    }
+                }
+
+                is ModelDownloadState.Paused -> {
+                    Text(
+                        text = "Download Paused",
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    LinearProgressIndicator(
+                        progress = { downloadState.progress },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "${(downloadState.progress * 100).toInt()}% — paused",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        OutlinedButton(
+                            onClick = onResume,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Icon(
+                                Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text("Resume")
+                        }
+                        OutlinedButton(
+                            onClick = onCancel,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error,
+                            ),
+                        ) {
+                            Text("Cancel")
+                        }
+                    }
                 }
 
                 is ModelDownloadState.Ready -> {
@@ -503,20 +593,35 @@ private fun ModelStatusCard(
                 }
 
                 is ModelDownloadState.Error -> {
-                    Text(
-                        text = downloadState.message,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = onDownload,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error,
-                        ),
-                    ) {
-                        Text("Retry Download")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.ErrorOutline,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = downloadState.message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    }
+                    // Only show retry if it's not a device capability issue
+                    val isDeviceIssue = downloadState.message.contains("RAM", ignoreCase = true) ||
+                        downloadState.message.contains("GPU", ignoreCase = true) ||
+                        downloadState.message.contains("supported", ignoreCase = true)
+                    if (!isDeviceIssue) {
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = onDownload,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error,
+                            ),
+                        ) {
+                            Text("Retry Download")
+                        }
                     }
                 }
             }
@@ -545,6 +650,9 @@ private fun GenerateSheetPreview() {
             onPromptChanged = {},
             onProviderChanged = {},
             onDownloadModel = {},
+            onPauseDownload = {},
+            onResumeDownload = {},
+            onCancelDownload = {},
             onSizePresetChanged = {},
             onInferenceStepsChanged = {},
             onGuidanceScaleChanged = {},
@@ -575,6 +683,9 @@ private fun GenerateSheetOnDevicePreview() {
             onPromptChanged = {},
             onProviderChanged = {},
             onDownloadModel = {},
+            onPauseDownload = {},
+            onResumeDownload = {},
+            onCancelDownload = {},
             onSizePresetChanged = {},
             onInferenceStepsChanged = {},
             onGuidanceScaleChanged = {},
@@ -605,6 +716,9 @@ private fun GenerateSheetOnDeviceReadyPreview() {
             onPromptChanged = {},
             onProviderChanged = {},
             onDownloadModel = {},
+            onPauseDownload = {},
+            onResumeDownload = {},
+            onCancelDownload = {},
             onSizePresetChanged = {},
             onInferenceStepsChanged = {},
             onGuidanceScaleChanged = {},
@@ -635,6 +749,9 @@ private fun GenerateSheetGeneratingPreview() {
             onPromptChanged = {},
             onProviderChanged = {},
             onDownloadModel = {},
+            onPauseDownload = {},
+            onResumeDownload = {},
+            onCancelDownload = {},
             onSizePresetChanged = {},
             onInferenceStepsChanged = {},
             onGuidanceScaleChanged = {},

@@ -1,9 +1,11 @@
 package ai.mlxdroid.imagelabarotory.ui.gallery
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ai.mlxdroid.imagelabarotory.data.local.MediaPipeModelManager
 import ai.mlxdroid.imagelabarotory.data.model.ApiProvider
+import ai.mlxdroid.imagelabarotory.data.service.ModelDownloadService
 import ai.mlxdroid.imagelabarotory.domain.usecase.DeleteImageUseCase
 import ai.mlxdroid.imagelabarotory.domain.usecase.GenerateImageUseCase
 import ai.mlxdroid.imagelabarotory.domain.usecase.LoadImagesUseCase
@@ -11,6 +13,7 @@ import ai.mlxdroid.imagelabarotory.util.GeneratedImage
 import ai.mlxdroid.imagelabarotory.util.ImageStorage
 import ai.mlxdroid.imagelabarotory.util.ShareHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +31,7 @@ class GalleryViewModel @Inject constructor(
     private val shareHelper: ShareHelper,
     private val imageStorage: ImageStorage,
     private val modelManager: MediaPipeModelManager,
+    @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GalleryUiState())
@@ -81,9 +85,19 @@ class GalleryViewModel @Inject constructor(
     }
 
     fun onDownloadModel() {
-        viewModelScope.launch {
-            modelManager.downloadModel()
-        }
+        ModelDownloadService.start(appContext)
+    }
+
+    fun onPauseDownload() {
+        ModelDownloadService.pause(appContext)
+    }
+
+    fun onResumeDownload() {
+        ModelDownloadService.resume(appContext)
+    }
+
+    fun onCancelDownload() {
+        ModelDownloadService.cancel(appContext)
     }
 
     // Generation settings

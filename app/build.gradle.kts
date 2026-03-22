@@ -48,6 +48,22 @@ android {
         compose = true
         buildConfig = true
     }
+
+    packaging {
+        resources {
+            // Exclude duplicate protobuf metadata files
+            excludes += "META-INF/DEPENDENCIES"
+        }
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        // Force full protobuf-java instead of javalite (required by MediaPipe)
+        force("com.google.protobuf:protobuf-java:4.26.1")
+    }
+    // Exclude protobuf-javalite everywhere — it conflicts with full protobuf-java
+    exclude(group = "com.google.protobuf", module = "protobuf-javalite")
 }
 
 dependencies {
@@ -69,6 +85,9 @@ dependencies {
     // Local AI
     implementation(libs.litertlm.android)
     implementation(libs.mediapipe.image.generator)
+
+    // Full protobuf (required by MediaPipe — javalite is excluded globally)
+    implementation("com.google.protobuf:protobuf-java:4.26.1")
 
     // Network
     implementation(libs.retrofit)
