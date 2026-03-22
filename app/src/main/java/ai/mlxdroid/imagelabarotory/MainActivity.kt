@@ -4,44 +4,36 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import ai.mlxdroid.imagelabarotory.ui.gallery.GalleryScreen
 import ai.mlxdroid.imagelabarotory.ui.theme.ImageLabarotoryTheme
+import com.google.ai.edge.litertlm.Backend
+import com.google.ai.edge.litertlm.Engine
+import com.google.ai.edge.litertlm.EngineConfig
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ImageLabarotoryTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                GalleryScreen()
             }
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+    private fun initLocalAi(){
+        val engineConfig = EngineConfig(
+            modelPath = "/path/to/your/model.litertlm", // Replace with your model path
+            backend = Backend.GPU(), // Or Backend.NPU(nativeLibraryDir = "...")
+            // Optional: Pick a writable dir. This can improve 2nd load time.
+            // cacheDir = "/tmp/" or context.cacheDir.path (for Android)
+        )
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    ImageLabarotoryTheme {
-        Greeting("Android")
+        val engine = Engine(engineConfig)
+        engine.initialize()
+        engine.close()
     }
 }

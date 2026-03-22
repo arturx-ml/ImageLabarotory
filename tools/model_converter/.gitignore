@@ -1,0 +1,6 @@
+venv/
+work/
+*.zip
+*.ckpt
+__pycache__/
+*.pyc
