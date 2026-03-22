@@ -54,6 +54,11 @@ android {
             // Exclude duplicate protobuf metadata files
             excludes += "META-INF/DEPENDENCIES"
         }
+        // Extract native libs to disk instead of loading from APK
+        // Required for MediaPipe's large GPU native libraries
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 }
 
