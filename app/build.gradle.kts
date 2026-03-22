@@ -66,6 +66,10 @@ dependencies {
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.navigation.compose)
 
+    // Local AI
+    implementation(libs.litertlm.android)
+    implementation(libs.mediapipe.image.generator)
+
     // Network
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.moshi)

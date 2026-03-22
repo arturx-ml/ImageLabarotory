@@ -1,6 +1,8 @@
 package ai.mlxdroid.imagelabarotory.di
 
 import ai.mlxdroid.imagelabarotory.BuildConfig
+import ai.mlxdroid.imagelabarotory.data.local.MediaPipeImageGenApi
+import ai.mlxdroid.imagelabarotory.data.model.ApiProvider
 import ai.mlxdroid.imagelabarotory.data.remote.ImageGenerationApi
 import ai.mlxdroid.imagelabarotory.data.remote.huggingface.HuggingFaceApiImpl
 import ai.mlxdroid.imagelabarotory.data.remote.huggingface.HuggingFaceApiService
@@ -10,6 +12,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.IntoMap
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -59,9 +62,15 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideImageGenerationApi(
-        huggingFaceApiImpl: HuggingFaceApiImpl,
-    ): ImageGenerationApi = huggingFaceApiImpl
+    @IntoMap
+    @ApiProviderKey(ApiProvider.HUGGING_FACE)
+    fun provideHuggingFaceApi(impl: HuggingFaceApiImpl): ImageGenerationApi = impl
+
+    @Provides
+    @Singleton
+    @IntoMap
+    @ApiProviderKey(ApiProvider.MEDIA_PIPE)
+    fun provideMediaPipeApi(impl: MediaPipeImageGenApi): ImageGenerationApi = impl
 
     @Provides
     @Singleton

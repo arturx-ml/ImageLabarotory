@@ -1,5 +1,6 @@
 package ai.mlxdroid.imagelabarotory.domain.usecase
 
+import ai.mlxdroid.imagelabarotory.data.model.ApiProvider
 import ai.mlxdroid.imagelabarotory.data.model.ImageGenerationRequest
 import ai.mlxdroid.imagelabarotory.data.model.ImageGenerationResult
 import ai.mlxdroid.imagelabarotory.data.repository.ImageRepository
@@ -19,18 +20,19 @@ class GenerateImageUseCase @Inject constructor(
         guidanceScale: Float,
         negativePrompt: String?,
         seed: Long?,
+        provider: ApiProvider,
     ): Result<GeneratedImage> {
         val request = ImageGenerationRequest(
             prompt = prompt,
-            width = sizePreset.width,
-            height = sizePreset.height,
+            width = if (provider.supportsSizePresets) sizePreset.width else 512,
+            height = if (provider.supportsSizePresets) sizePreset.height else 512,
             numInferenceSteps = numInferenceSteps,
             guidanceScale = guidanceScale,
             negativePrompt = negativePrompt,
             seed = seed,
         )
 
-        return when (val result = repository.generateImage(request)) {
+        return when (val result = repository.generateImage(request, provider)) {
             is ImageGenerationResult.Success -> {
                 val saved = imageStorage.saveImage(result.imageBytes, prompt)
                 Result.success(saved)

@@ -2,6 +2,8 @@ package ai.mlxdroid.imagelabarotory.ui.gallery
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ai.mlxdroid.imagelabarotory.data.local.MediaPipeModelManager
+import ai.mlxdroid.imagelabarotory.data.model.ApiProvider
 import ai.mlxdroid.imagelabarotory.domain.usecase.DeleteImageUseCase
 import ai.mlxdroid.imagelabarotory.domain.usecase.GenerateImageUseCase
 import ai.mlxdroid.imagelabarotory.domain.usecase.LoadImagesUseCase
@@ -25,6 +27,7 @@ class GalleryViewModel @Inject constructor(
     private val deleteImageUseCase: DeleteImageUseCase,
     private val shareHelper: ShareHelper,
     private val imageStorage: ImageStorage,
+    private val modelManager: MediaPipeModelManager,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GalleryUiState())
@@ -32,6 +35,12 @@ class GalleryViewModel @Inject constructor(
 
     init {
         loadImages()
+        // Collect model download state
+        viewModelScope.launch {
+            modelManager.downloadState.collect { downloadState ->
+                _uiState.update { it.copy(modelDownloadState = downloadState) }
+            }
+        }
     }
 
     private fun loadImages() {
@@ -59,6 +68,22 @@ class GalleryViewModel @Inject constructor(
 
     fun onDismissError() {
         _uiState.update { it.copy(errorMessage = null) }
+    }
+
+    // Provider selection
+    fun onProviderChanged(provider: ApiProvider) {
+        _uiState.update {
+            it.copy(
+                selectedProvider = provider,
+                numInferenceSteps = provider.defaultSteps,
+            )
+        }
+    }
+
+    fun onDownloadModel() {
+        viewModelScope.launch {
+            modelManager.downloadModel()
+        }
     }
 
     // Generation settings
@@ -122,6 +147,7 @@ class GalleryViewModel @Inject constructor(
                 guidanceScale = state.guidanceScale,
                 negativePrompt = state.negativePrompt.ifBlank { null },
                 seed = state.seed.toLongOrNull(),
+                provider = state.selectedProvider,
             )
 
             result.fold(
